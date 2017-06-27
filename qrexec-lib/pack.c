@@ -175,7 +175,8 @@ int single_file_processor(const char *filename, const struct stat *st)
         }
     }
     // check for possible error from qfile-unpacker
-    wait_for_result();
+    // wait_for_result();
+    // Removed to enable fuzzing
     return 0;
 }
 
