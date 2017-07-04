@@ -54,61 +54,7 @@ void notify_end_and_wait_for_result(void)
 
 void wait_for_result(void)
 {
-    struct result_header hdr;
-    struct result_header_ext hdr_ext;
-    char last_filename[MAX_PATH_LENGTH + 1];
-    char last_filename_prefix[] = "; Last file: ";
-
-    if (!read_all(0, &hdr, sizeof(hdr))) {
-        if (errno == EAGAIN) {
-            // no result sent and stdin still open
-            return;
-        } else {
-            // other read error or EOF
-            exit(1);  // hopefully remote has produced error message
-        }
-    }
-    if (!read_all(0, &hdr_ext, sizeof(hdr_ext))) {
-        // remote used old result_header struct
-        hdr_ext.last_namelen = 0;
-    }
-    if (hdr_ext.last_namelen > MAX_PATH_LENGTH) {
-        // read only at most MAX_PATH_LENGTH chars
-        hdr_ext.last_namelen = MAX_PATH_LENGTH;
-    }
-    if (!read_all(0, last_filename, hdr_ext.last_namelen)) {
-        fprintf(stderr, "Failed to get last filename\n");
-        hdr_ext.last_namelen = 0;
-    }
-    last_filename[hdr_ext.last_namelen] = '\0';
-    if (!hdr_ext.last_namelen)
-        /* set prefix to empty string */
-        last_filename_prefix[0] = '\0';
-
-    errno = hdr.error_code;
-    if (hdr.error_code != 0) {
-        switch (hdr.error_code) {
-            case EEXIST:
-                call_error_handler("A file named %s already exists in QubesIncoming dir", last_filename);
-                break;
-            case EINVAL:
-                call_error_handler("File copy: Corrupted data from packer%s%s", last_filename_prefix, last_filename);
-                break;
-            case EDQUOT:
-                if (ignore_quota_error) {
-                    /* skip also CRC check as sender and receiver might be
-                     * desynchronized in this case */
-                    return;
-                }
-                /* fall though */
-            default:
-                call_error_handler("File copy: %s%s%s",
-                        strerror(hdr.error_code), last_filename_prefix, last_filename);
-        }
-    }
-    if (hdr.crc32 != crc32_sum) {
-        call_error_handler("File transfer failed: checksum mismatch");
-    }
+    return;
 }
 
 void write_headers(const struct file_header *hdr, const char *filename)
@@ -175,8 +121,7 @@ int single_file_processor(const char *filename, const struct stat *st)
         }
     }
     // check for possible error from qfile-unpacker
-    // wait_for_result();
-    // Removed to enable fuzzing
+    wait_for_result();
     return 0;
 }
 
