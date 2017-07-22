@@ -1,4 +1,3 @@
-CC=gcc
 CFLAGS+=-Wall -Wextra -Werror -g -O3
 all:	meminfo-writer
 SBINDIR?=/usr/sbin
